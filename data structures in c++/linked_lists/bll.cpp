@@ -44,6 +44,25 @@ private:
     DLLNode * _head = NULL;
     DLLNode * _tail = NULL;
     int _length = 0;
+
+    DLLNode * getNodeAt(int index)
+    {
+        int count = 0;
+        DLLNode * currentNode = _head;
+        DLLNode * nodeAtIndex = NULL;
+            
+        while (currentNode)
+        {
+            if (count == index)
+            {
+                nodeAtIndex = currentNode;
+            }
+            currentNode = currentNode->getNext();
+            count++;
+        }
+        
+        return nodeAtIndex;
+    }
     
 public:
     int size() const {return _length;}
@@ -98,65 +117,60 @@ public:
 
     void insertAtPosition(int value, int index)
     {
-
-        // create node pointer
         DLLNode * node = new DLLNode(value);
-
         if (node)
         {
             if (index == 0)
             {
-                // and to front
                 insertAtFront(value);
                 return;
             }
             else if (index >= _length)
             {
-                // add to end
                 insertAtEnd(value);
                 return;
             }
             else
             {
-                // add in middle
-                int count = 0;
-                for (DLLNode * currentNode = _head; count < _length; currentNode = currentNode->getNext())
-                {
-                    if (count == index)
-                    {
-                        node->setNext(currentNode);
-                        node->setPrevious(currentNode->getPrevious());
-                        currentNode->getPrevious()->setNext(node);
-                        currentNode->setPrevious(node);
-                    }
+                // get node at index
+                DLLNode * nodeAtIndex = getNodeAt(index);
 
-                    count++;
-                }
+                /*
+                    set node next and previous
+                    for node to be at index i, the current node becomes its next
+                    and the current nodes previour becomes its previous
+                */
+                
+                node->setNext(nodeAtIndex);
+                node->setPrevious(nodeAtIndex->getPrevious());
+
+                // set node as next for nodeAtIndex previous
+                nodeAtIndex->getPrevious()->setNext(node);                
+                // set node as nodeAtIndex previous
+                nodeAtIndex->setPrevious(node);
+
+                _length++;
             }
-            _length++;
         }
-
         return;
     }
 
     void deleteFront()
     {
-        DLLNode * currentHead = _head;
-        _head = _head->getNext();
-        _head->setPrevious(NULL);
-        delete currentHead;
+        DLLNode * currentHead = _head; // store current head node
+        _head = currentHead->getNext(); // set head pointer current head next
+        _head->setPrevious(NULL); // set new head previous to NULL
+        delete currentHead; // delete old head
         _length--;
-        return;
     }
 
     void deleteEnd()
     {
-        DLLNode * currentTail = _tail;
-        _tail = _tail->getPrevious();
-        _tail->setNext(NULL);
-        delete currentTail;
+        DLLNode * currentTail = _tail; // store current tail node
+        _tail = currentTail->getPrevious(); // set tail pointer current tail previous
+        _tail->setNext(NULL); // set new tail next to NULL
+        delete currentTail; // delete old tail
         _length--;
-        return;
     }
 
     void deleteAtPosition(int index)
@@ -164,56 +178,120 @@ public:
         if (index == 0)
         {
             deleteFront();
+            return;
         }
-        else if (index >= _length)
+        else if (index == _length - 1)
         {
             deleteEnd();
-        }
-        else
-        {            
-            int count = 0;
-            for (DLLNode * currentNode = _head; count < _length; currentNode = currentNode->getNext())
-            {
-                if (count == index)
-                {
-                    DLLNode * nextNode = currentNode->getNext();
-                    DLLNode * previousNode = currentNode->getPrevious();
-                    
-                    std::cout << "prev: " << previousNode->getValue() << std::endl;
-                    std::cout << "next: " << nextNode->getValue() << std::endl;
-
-                    previousNode->setNext(NULL);
-                    nextNode->setPrevious(previousNode);
-
-                    break;
-                }
-
-                count++;
-            }
+            return;
         }
 
-        
+        // get node at index
+        DLLNode * nodeAtIndex = getNodeAt(index);
+        // node next
+        DLLNode * nextNode = nodeAtIndex->getNext();
+        // node previous
+        DLLNode * previousNode = nodeAtIndex->getPrevious();
+
+        previousNode->setNext(nextNode);
+        nextNode->setPrevious(previousNode);
+
+        delete nodeAtIndex;
+        _length--;
         return;
     }
 
-    void traverse ()
+    void reverse()
     {
-        int count = 0;
         DLLNode * currentNode = _head;
-
-        while (count < _length)
+        while (currentNode)
         {
-            std::cout << "<--(" << currentNode->getValue() << ")-->";
+            DLLNode * nextNode = currentNode->getNext();
+            DLLNode * previousNode = currentNode->getPrevious();
+            if (!previousNode)
+            {
+                _tail = currentNode;
+            }
+            if (!nextNode)
+            {
+                _head = currentNode;
+            }
+            currentNode->setNext(previousNode);
+            currentNode->setPrevious(nextNode);
+            currentNode = nextNode;
+        }
+        return;
+    }
 
-            if (currentNode->getNext())
-                currentNode = currentNode->getNext();
-            else
-                break;
-        }            
+    void sort()
+    {
 
-        std::cout << "NULL" << std::endl;
+        // bubble sort
+        DLLNode * currentNode;
+        DLLNode * nextNode;
+
+        int currentNodeIndex;
+        int currentNodeValue;
+        int nextNodeValue;
+
+        for (int i = 1; i <= size() - 1; i++)
+        {
+            currentNode = _head;
+            for (currentNodeIndex = 0; currentNodeIndex < size() - i; currentNodeIndex++, currentNode = getNodeAt(currentNodeIndex))
+            {                
+                nextNode = currentNode->getNext();
+                currentNodeValue = currentNode->getValue();
+                nextNodeValue = nextNode->getValue();
+
+                if (currentNodeValue > nextNodeValue)
+                {
+                    // swap                    
+                    deleteAtPosition(currentNodeIndex);    // remove currentNode
+                    insertAtPosition(currentNodeValue, currentNodeIndex + 1); // insert removed node after next node
+                }
+                else
+                    continue;
+            }
+        }
 
         return;
+    }
+
+    void clear()
+    {
+        for (DLLNode * currentNode = _head; currentNode != NULL; currentNode = currentNode->getNext())
+        {
+            DLLNode * nextNode = currentNode->getNext();
+            if (nextNode)
+            {
+                nextNode->setPrevious(NULL);
+                _head = nextNode;
+                delete currentNode;
+            }
+            else
+            {
+                // at tail
+                _head = NULL;
+                _tail = NULL;
+                delete currentNode;
+            }
+            _length--;
+        }
+    }
+
+    void traverse(void)
+    {
+        if (_head)
+        {
+            DLLNode * currentNode = _head;
+            while (currentNode)
+            {
+                std::cout << currentNode->getValue() << " -> ";
+                currentNode = currentNode->getNext();
+            }
+            std::cout << "NULL" << std::endl;
+        }
+
     }
 };
 
@@ -230,11 +308,19 @@ int main(int argc, char * argv[])
 
     list.deleteFront();
     list.deleteEnd();
-    list.traverse();
     list.deleteAtPosition(2);
     list.insertAtPosition(120, 2);
     list.insertAtEnd(1000);
     list.insertAtPosition(-4, 4);
     list.traverse();
+
+    list.reverse();
+    // list.clear();
+    list.traverse();
+    std::cout << "-----------------------------sorting----------------------------" << std::endl;
+    list.sort();
+    list.traverse();
+
+
 	return 0;
 }
