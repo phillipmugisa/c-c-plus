@@ -1,5 +1,6 @@
 /*
     This program shows the implementation of a circular singly linked links
+    For a circular linked list, the tail node points to the head node.
 */
 
 /*
@@ -18,14 +19,14 @@
 
 #include <iostream>
 
-class SLLNode
+class CLLNode
 {
 private:
     int _value;
-    SLLNode * _next = this;
+    CLLNode * _next = this;
 
 public:
-    SLLNode(int value)
+    CLLNode(int value)
     {
         _value = value;
     }
@@ -37,37 +38,42 @@ public:
     {
         return _value;
     }
-    void setNext(SLLNode * next)
+    void setNext(CLLNode * next)
     {
         _next = next;
     }
-    SLLNode * getNext()
+    CLLNode * getNext()
     {
         return _next;
     }
 };
 
-class SLL
+class CLL
 {
 private:
-    SLLNode * _head = NULL;
-    SLLNode * _tail = NULL;
+    CLLNode * _head = NULL;
+    CLLNode * _tail = NULL;
     int _length = 0;
 
 
-    SLLNode * getNodeAt(int index)
+    CLLNode * getNodeAt(int index)
     {
-        SLLNode * node = _head;
+	if (index < _length)
+	{
+		CLLNode * node = _head;
 
-        for (int i = 0; i <= index; i++)
-        {
-            if (i == index)
-                break;
+		for (int i = 0; i <= index; i++)
+		{
+		    if (i == index)
+			break;
 
-            node = node->getNext();
-        }
-
-        return node;
+		    node = node->getNext();
+		}
+		return node;
+	}
+	// return empty node
+	CLLNode * node = new CLLNode(0);
+	return node;
     }
 
 public:
@@ -75,7 +81,7 @@ public:
     void insertAtFront(int value)
     {
         // create new node
-        SLLNode * node = new SLLNode(value);
+        CLLNode * node = new CLLNode(value);
         if (node)
         {
             if(_head == NULL)
@@ -86,7 +92,7 @@ public:
             else
             {
                 node->setNext(_head);
-                _head->setNext(node);
+                _tail->setNext(node);
                 _head = node;
             }
             
@@ -97,7 +103,7 @@ public:
     void insertAtEnd(int value)
     {
         // create new node
-        SLLNode * node = new SLLNode(value);
+        CLLNode * node = new CLLNode(value);
         if (node)
         {
             if(!_tail)
@@ -117,7 +123,7 @@ public:
     void insertAtPosition(int index, int value)
     {
         // create new node
-        SLLNode * node = new SLLNode(value);
+        CLLNode * node = new CLLNode(value);
         if (node)
         {
             if (index == 0)
@@ -131,8 +137,8 @@ public:
                 return;
             }
             
-            SLLNode * nodeAtIndex = getNodeAt(index);
-            SLLNode * previousNode = getNodeAt(index - 1);
+            CLLNode * nodeAtIndex = getNodeAt(index);
+            CLLNode * previousNode = getNodeAt(index - 1);
 
             // node points to node at passed index
             node->setNext(nodeAtIndex);
@@ -147,11 +153,9 @@ public:
     void deleteFront()
     {
         // store _head
-        SLLNode * atFront = _head;
+        CLLNode * atFront = _head;
         // set next to _head
         _head = _head->getNext();
-
-        std::cout << "new head: " << _head->getValue() << std::endl;
 
         // set tail to point to new head
         _tail->setNext(_head);
@@ -162,7 +166,8 @@ public:
     }
     void deleteEnd()
     {
-        SLLNode * previousNode = getNodeAt(_length - 2);
+	// locate node before current tail
+        CLLNode * previousNode = getNodeAt(_length - 2);
         // delete _tail
         delete _tail;
         _tail = previousNode;
@@ -170,81 +175,54 @@ public:
         _tail->setNext(_head);
 
         _length--;
-
+	return;
     }
     void deletePosition(int index)
     {
-        int count = 0;
+    	if (index == 0)
+	{
+		deleteFront();
+		return;
+	}
+	else if (index == _length - 1)
+    	{
+		deleteEnd();
+		return;
+    	}
 
-        SLLNode * currentNode = _head;
-        SLLNode * nextNode = currentNode->getNext();
+	// get node before node at passed index
+	CLLNode * nodeAtIndex = getNodeAt(index);
+	CLLNode * prevNode = getNodeAt(index - 1);
 
-        while (count < _length)
-        {
-            if (index == 0)
-            {
-                deleteFront();
-                return;
-            }
-            else if (index == _length - 1)
-            {
-                deleteEnd();
-                return;
-            }
-            else if (count == index - 1)
-            {
-                // create temp
-                SLLNode * nodeToDate = nextNode;
-                // set current node's next to the node to be deleted's next
-                currentNode->setNext(nextNode->getNext());
-                // delete node
-                delete nodeToDate;
+	prevNode->setNext(nodeAtIndex->getNext());
+	delete nodeAtIndex;
+	return;
 
-                _length--;
-                return;
-            }
-
-            currentNode = nextNode;
-            nextNode = currentNode->getNext();
-            count++;
-        }
     }
 
     void clear()
     {
-        SLLNode * currentNode = _head;
-        SLLNode * nextNode = NULL;
+        CLLNode * currentNode = _head;
+        CLLNode * nextNode = NULL;
 
-        while (currentNode)
-        {
-            if(!nextNode)
-            {
-                // delete tail since its next is NULL because head was alright deleted
-                delete currentNode;
-            }
-            else
-            {
-                delete currentNode;
-                currentNode = nextNode;
-                nextNode = currentNode->getNext();
-            }
-
-            _length--;
-        }
+	while (currentNode)
+	{
+		nextNode = currentNode->getNext();
+		delete currentNode;
+	}
     }
 
     void traverse()
     {
-        SLLNode * currentNode = _head;
+        CLLNode * currentNode = _head;
         while(currentNode)
         {
-            std::cout << currentNode->getValue() << " -> ";
+        	 std::cout << currentNode->getValue() << " -> ";
 
-            // check if at tail
-            if (currentNode != _tail )
-                currentNode = currentNode->getNext();
-            else
-                break;
+	        // check if at tail
+		if (currentNode == _tail) break;
+		
+		currentNode = currentNode->getNext();
         }
 
         std::cout << "HEAD" << std::endl;
@@ -254,7 +232,7 @@ public:
 int main (int argc, char * argv[])
 {
 
-    SLL list;
+    CLL list;
     list.insertAtFront(0);
     list.insertAtFront(10);
     list.insertAtEnd(99);
@@ -263,13 +241,13 @@ int main (int argc, char * argv[])
     list.insertAtPosition(3, 920);
     list.traverse();
 
-    list.deleteFront();
-    list.deleteEnd();
-    list.deletePosition(2);
-    // list.insertAtPosition(2, 120);
-    // list.insertAtEnd(1000);
-    // list.insertAtPosition(2, -4);
-    // list.traverse();
+     list.deleteFront();
+     list.deleteEnd();
+     list.deletePosition(2);
+     list.insertAtPosition(2, 120);
+     list.insertAtEnd(1000);
+     list.insertAtPosition(2, -4);
+     list.traverse();
 
     return 0;
 }
